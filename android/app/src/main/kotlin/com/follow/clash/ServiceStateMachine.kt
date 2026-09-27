@@ -59,6 +59,20 @@ internal class ServiceStateMachine(private val host: ServiceStateHost) {
         }
     }
 
+    /**
+     * Whether the next [handleToggleAction] can only finish with a system dialog on screen: a start
+     * that still owes the VPN consent prompt needs an activity in front to raise it, a stop never
+     * does, and an app with no engine has no gateway that could raise one at all. The stored state
+     * is the source the native start path reads.
+     */
+    fun requiresForegroundActivity(): Boolean {
+        if (isRunningRequested() || host.app() == null) {
+            return false
+        }
+        val options = host.loadSharedState().vpnOptions ?: return false
+        return options.enable && !host.isVpnPermissionGranted()
+    }
+
     suspend fun refresh(): Long = transitionLock.withLock {
         val current = runTimeMillis
         mutableRunState.value = if (current == 0L) RunState.STOPPED else RunState.STARTED

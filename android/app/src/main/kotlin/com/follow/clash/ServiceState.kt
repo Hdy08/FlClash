@@ -17,6 +17,8 @@ object ServiceState {
 
     suspend fun handleToggleAction() = machine.handleToggleAction()
 
+    fun requiresForegroundActivity(): Boolean = machine.requiresForegroundActivity()
+
     suspend fun handleStartAction() = machine.handleStartAction()
 
     suspend fun handleStopAction() = machine.handleStopAction()

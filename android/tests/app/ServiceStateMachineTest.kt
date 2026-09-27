@@ -507,6 +507,68 @@ class ServiceStateMachineTest {
     }
 
     @Test
+    fun `a granted vpn lets the tile toggle without an activity`() = runTest {
+        val host = FakeHost(backgroundScope)
+        host.app = FakeApp()
+        val machine = ServiceStateMachine(host)
+
+        assertFalse(machine.requiresForegroundActivity())
+    }
+
+    @Test
+    fun `a start that still owes the vpn consent asks for an activity`() = runTest {
+        val host = FakeHost(backgroundScope)
+        host.app = FakeApp()
+        host.vpnPermissionGranted = false
+        val machine = ServiceStateMachine(host)
+
+        assertTrue(machine.requiresForegroundActivity())
+    }
+
+    @Test
+    fun `a proxy-only start asks for no activity`() = runTest {
+        val host = FakeHost(backgroundScope)
+        host.app = FakeApp()
+        host.vpnPermissionGranted = false
+        host.storedSharedState = configuredState(enable = false)
+        val machine = ServiceStateMachine(host)
+
+        assertFalse(machine.requiresForegroundActivity())
+    }
+
+    @Test
+    fun `a stop asks for no activity`() = runTest {
+        val host = FakeHost(backgroundScope)
+        host.app = FakeApp()
+        val machine = ServiceStateMachine(host)
+        machine.syncSharedState(configuredState())
+        machine.requestStart().await()
+        host.vpnPermissionGranted = false
+
+        assertFalse(machine.requiresForegroundActivity())
+    }
+
+    @Test
+    fun `an app with no engine asks for no activity`() = runTest {
+        val host = FakeHost(backgroundScope)
+        host.vpnPermissionGranted = false
+        val machine = ServiceStateMachine(host)
+
+        assertFalse(machine.requiresForegroundActivity())
+    }
+
+    @Test
+    fun `an unconfigured app asks for no activity`() = runTest {
+        val host = FakeHost(backgroundScope)
+        host.app = FakeApp()
+        host.vpnPermissionGranted = false
+        host.storedSharedState = SharedState()
+        val machine = ServiceStateMachine(host)
+
+        assertFalse(machine.requiresForegroundActivity())
+    }
+
+    @Test
     fun `a revoke is ignored while no vpn service is active`() = runTest {
         val host = FakeHost(backgroundScope)
         host.vpnServiceActive = false

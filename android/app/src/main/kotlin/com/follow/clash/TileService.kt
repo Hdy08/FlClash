@@ -3,6 +3,7 @@ package com.follow.clash
 import android.annotation.SuppressLint
 import android.os.Build
 import android.service.quicksettings.Tile
+import com.follow.clash.common.GlobalState
 import com.follow.clash.common.QuickAction
 import com.follow.clash.common.quickIntent
 import com.follow.clash.common.toPendingIntent
@@ -26,12 +27,15 @@ class TileService : android.service.quicksettings.TileService() {
         }
     }
 
-    // Always route through QuickActionActivity: startActivityAndCollapse is
-    // what closes the shade, so toggling the service in place would leave
-    // the panel open after a tap.
+    // A toggleable tile flips where it stands, so the action runs here and the shade stays open.
+    // Only a start that still owes the VPN consent prompt needs QuickActionActivity in front.
     override fun onClick() {
         super.onClick()
-        openQuickAction()
+        if (ServiceState.requiresForegroundActivity()) {
+            openQuickAction()
+        } else {
+            GlobalState.launch { ServiceState.handleToggleAction() }
+        }
     }
 
     override fun onStopListening() {

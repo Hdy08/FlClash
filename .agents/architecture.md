@@ -137,6 +137,11 @@ Quick Settings, notification, revoke, and Always-on VPN paths converge on the sa
 - With a Flutter engine attached, `ServiceState.handleStartAction()`/`handleStopAction()` forward through `TilePlugin` to
   `TileManager`, which updates normal Flutter setup state. Without Flutter, native code restores `SharedState` from
   preferences, runs `quickSetup`, checks VPN permission, and submits the native request directly.
+- The tile owns its tap: `TileService.onClick()` toggles in place through `ServiceState.handleToggleAction()`, so the
+  shade stays open and no activity window animates behind it. `ServiceState.requiresForegroundActivity()` marks the one
+  exception — a start that would have to raise the VPN consent prompt from an attached engine goes to
+  `QuickActionActivity` through `startActivityAndCollapse`, because only a foreground activity can put that dialog on
+  screen.
 - Android may create an Always-on `VpnService` through `onStartCommand()` without FlClash's bound-service path. The service
   sends the explicit, permission-protected `VPN_START_REQUESTED` broadcast to `ServiceBroadcastReceiver`, which routes it to
   `ServiceState.handleStartAction()` so Core/configuration and the normal binding are restored before TUN is treated as
