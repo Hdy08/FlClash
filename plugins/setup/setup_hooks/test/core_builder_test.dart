@@ -144,6 +144,29 @@ void main() {
       );
     });
 
+    test(
+      'prefers the batch wrapper the Windows NDK ships beside the script',
+      () {
+        final bin = p.join(repository.path, 'ndk', 'prebuilt', 'host', 'bin');
+        Directory(bin).createSync(recursive: true);
+        final wrapper = p.join(bin, 'aarch64-linux-android23-clang');
+        File('$wrapper.cmd').writeAsStringSync('@echo off\r\n');
+        final request = const CoreBuilder().requestFor(
+          buildInput(
+            os: OS.android,
+            architecture: Architecture.arm64,
+            compiler: Uri.file(p.join(bin, 'clang')),
+            ndkApi: 23,
+          ),
+        )!;
+
+        expect(
+          request.androidToolchain!.clangFor(Target.androidArm64),
+          Platform.isWindows ? '$wrapper.cmd' : wrapper,
+        );
+      },
+    );
+
     test('fails when Flutter passes no Android compiler', () {
       expect(
         () => const CoreBuilder().requestFor(
